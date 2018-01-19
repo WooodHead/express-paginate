@@ -21,32 +21,32 @@ exports.href = function href(req) {
   return function (prev, params) {
 
     var query = clone(req.query);
-    var page = parseInt(query.page);
+
     if (typeof prev === 'object') {
       params = prev;
       prev = false;
     } else {
       prev = (typeof prev === 'boolean') ? prev : false;
-      query.page = prev ? page -= 1 : page += 1;
-      query.page = (query.page < 1) ? 1 : page;
+      query.page = prev ? query.page -= 1 : query.page += 1;
+      query.page = (query.page < 1) ? 1 : query.page;
     }
 
     // allow overriding querystring params
     // (useful for sorting and filtering)
     // another alias for `_.assign` is `_.extend`
-    if (isObject(params)) {
+    if (isObject(params))
       query = assign(query, params);
-    }
 
     return url.parse(req.originalUrl).pathname + '?' + querystring.stringify(query);
+
   };
 };
 
 exports.hasNextPages = function hasNextPages(req) {
-  return function (pageCount, page) {
+  return function (pageCount) {
     if (typeof pageCount !== 'number' || pageCount < 0)
       throw new Error('express-paginate: `pageCount` is not a number >= 0');
-    return page < pageCount;
+    return req.query.page < pageCount;
   };
 };
 
@@ -74,11 +74,9 @@ exports.getArrayPages = function (req) {
       for (var i = start; i <= end; i++) {
         pages.push({
           number: i,
-          url: exports.href(req)()
+          url: url.parse(req.originalUrl).pathname + '?page=' + i
         });
       }
-      // console.log('req', req)
-      console.log('pages', pages)
       return pages;
     }
   }
